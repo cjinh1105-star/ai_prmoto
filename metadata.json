@@ -1,0 +1,6 @@
+{
+  "name": "프롬프트 보관함",
+  "description": "카테고리별 프롬프트를 저장하고 검색하며 줄바꿈 그대로 한 번에 복사하는 개인 프롬프트 보관함",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

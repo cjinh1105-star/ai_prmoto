@@ -1,0 +1,2158 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>프롬프트 보관함</title>
+    <meta
+      name="description"
+      content="카테고리별 프롬프트를 저장하고 검색하며 줄바꿈 그대로 한 번에 복사하는 개인 프롬프트 보관함"
+    />
+    <meta property="og:title" content="프롬프트 보관함" />
+    <meta
+      property="og:description"
+      content="카테고리별 프롬프트를 저장하고 검색하며 줄바꿈 그대로 한 번에 복사하는 개인 프롬프트 보관함"
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-canvas: #f6f8fb;
+        --bg-surface: #ffffff;
+        --bg-surface-subtle: #f1f5f9;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --border-hairline: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --accent: #2563eb;
+        --accent-hover: #1d4ed8;
+        --accent-soft: #eff6ff;
+        --accent-text: #1e40af;
+        --success: #15803d;
+        --success-soft: #f0fdf4;
+        --danger: #dc2626;
+        --danger-soft: #fef2f2;
+        --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+        --shadow-card-hover: 0 8px 20px -6px rgba(15, 23, 42, 0.08);
+        --shadow-modal: 0 24px 48px -12px rgba(15, 23, 42, 0.18);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --font-sans: 'Plus Jakarta Sans', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-canvas);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font-family: inherit;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+
+      /* Sticky Top Bar */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border-hairline);
+      }
+
+      .topbar-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        white-space: nowrap;
+        flex-shrink: 0;
+        text-decoration: none;
+      }
+
+      .brand-emoji {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: var(--accent-soft);
+        font-size: 18px;
+      }
+
+      .search-wrap {
+        position: relative;
+        flex: 1;
+        max-width: 440px;
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 15px;
+        pointer-events: none;
+        opacity: 0.7;
+      }
+
+      .search-input {
+        width: 100%;
+        height: 42px;
+        padding: 0 38px 0 40px;
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-sm);
+        background: var(--bg-canvas);
+        color: var(--text-primary);
+        font-size: 14px;
+        transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+      }
+
+      .search-input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .search-input:focus {
+        background: var(--bg-surface);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        outline: none;
+      }
+
+      .search-clear {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 26px;
+        height: 26px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+      }
+
+      .search-clear.visible {
+        display: inline-flex;
+      }
+
+      .search-clear:hover {
+        background: var(--bg-surface-subtle);
+        color: var(--text-primary);
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 8px 16px;
+        border-radius: var(--radius-sm);
+        border: 1px solid transparent;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+          border-color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+          color 150ms cubic-bezier(0.16, 1, 0.3, 1),
+          transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .btn-sm {
+        min-height: 34px;
+        padding: 5px 12px;
+        font-size: 13px;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+
+      .btn-secondary {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        border-color: var(--border-hairline);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: var(--bg-surface-subtle);
+        border-color: var(--border-strong);
+      }
+
+      .btn-secondary.active-toggle {
+        background: var(--accent-soft);
+        color: var(--accent-text);
+        border-color: #bfdbfe;
+      }
+
+      .btn-danger {
+        background: var(--bg-surface);
+        color: var(--danger);
+        border-color: #fecaca;
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: var(--danger-soft);
+        border-color: #fca5a5;
+      }
+
+      .btn-danger-solid {
+        background: var(--danger);
+        color: #ffffff;
+        border-color: var(--danger);
+      }
+
+      .btn-danger-solid:hover:not(:disabled) {
+        background: #b91c1c;
+      }
+
+      .btn-copy {
+        min-height: 36px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--bg-surface-subtle);
+        color: var(--text-primary);
+        border-color: var(--border-hairline);
+      }
+
+      .btn-copy:hover {
+        background: var(--accent-soft);
+        color: var(--accent-text);
+        border-color: #bfdbfe;
+      }
+
+      .btn-copy.copied {
+        background: var(--success-soft);
+        color: var(--success);
+        border-color: #bbf7d0;
+      }
+
+      /* Main Container */
+      .main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 24px 64px;
+      }
+
+      /* Alert / Notice Banner */
+      .notice-banner {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        margin-bottom: 24px;
+        border-radius: var(--radius-md);
+        border: 1px solid #fecaca;
+        background: var(--danger-soft);
+        color: #991b1b;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .notice-banner.visible {
+        display: flex;
+      }
+
+      /* Admin Panel */
+      .admin-panel {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-card);
+        margin-bottom: 28px;
+        overflow: hidden;
+      }
+
+      .admin-panel-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-hairline);
+        background: var(--bg-canvas);
+      }
+
+      .admin-panel-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .admin-panel-title {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .admin-email-text {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+
+      .admin-panel-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      }
+
+      .admin-form-col {
+        padding: 24px;
+        border-right: 1px solid var(--border-hairline);
+      }
+
+      .admin-list-col {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .admin-subhead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 0 16px;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .admin-manage-list {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-md);
+        max-height: 520px;
+        overflow-y: auto;
+      }
+
+      .admin-manage-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border-hairline);
+        background: var(--bg-surface);
+        transition: background-color 140ms ease;
+      }
+
+      .admin-manage-row:last-child {
+        border-bottom: none;
+      }
+
+      .admin-manage-row:hover {
+        background: var(--bg-canvas);
+      }
+
+      .admin-manage-row.editing-row {
+        background: var(--accent-soft);
+      }
+
+      .admin-row-info {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .admin-row-title {
+        margin: 0 0 3px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .admin-row-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .admin-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      .admin-empty-list {
+        padding: 36px 16px;
+        text-align: center;
+        font-size: 13.5px;
+        color: var(--text-muted);
+      }
+
+      /* Form Controls */
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+
+      .form-label {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .form-hint {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .form-input,
+      .form-select,
+      .form-textarea {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-sm);
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        font-size: 14.5px;
+        line-height: 1.65;
+        transition: border-color 150ms ease, box-shadow 150ms ease;
+      }
+
+      .form-input:focus,
+      .form-select:focus,
+      .form-textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        outline: none;
+      }
+
+      .form-textarea {
+        min-height: 360px;
+        resize: vertical;
+        white-space: pre-wrap;
+      }
+
+      .form-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .form-error {
+        display: none;
+        margin-top: 12px;
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        background: var(--danger-soft);
+        color: #991b1b;
+        font-size: 13.5px;
+      }
+
+      .form-error.visible {
+        display: block;
+      }
+
+      /* Filter & Summary Toolbar */
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .filter-tabs {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 5px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: 10px;
+      }
+
+      .filter-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 6px 14px;
+        border: none;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background-color 150ms ease, color 150ms ease;
+      }
+
+      .filter-tab:hover {
+        color: var(--text-primary);
+        background: var(--bg-surface-subtle);
+      }
+
+      .filter-tab.active {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      .tab-count {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        opacity: 0.78;
+      }
+
+      .toolbar-meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Grid */
+      .prompt-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      /* Prompt Card */
+      .prompt-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        box-shadow: var(--shadow-card);
+        cursor: pointer;
+        transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+          box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+          border-color 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .prompt-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-card-hover);
+        border-color: var(--border-strong);
+      }
+
+      .card-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 12.5px;
+        color: var(--text-muted);
+      }
+
+      .card-category {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-weight: 600;
+        color: var(--accent-text);
+      }
+
+      .card-order {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .card-title {
+        margin: 0 0 10px;
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1.4;
+        letter-spacing: -0.015em;
+        color: var(--text-primary);
+        text-wrap: balance;
+      }
+
+      .card-preview {
+        margin: 0 0 18px;
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text-secondary);
+        white-space: pre-wrap;
+        word-break: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: calc(13.5px * 1.6 * 3);
+      }
+
+      .card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border-hairline);
+      }
+
+      .card-chars {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      /* Empty & Loading States */
+      .state-box {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 64px 24px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-lg);
+      }
+
+      .state-emoji {
+        font-size: 40px;
+        margin-bottom: 12px;
+      }
+
+      .state-title {
+        margin: 0 0 6px;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .state-desc {
+        margin: 0 0 20px;
+        font-size: 14px;
+        color: var(--text-muted);
+        max-width: 380px;
+      }
+
+      .skeleton-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-md);
+        padding: 20px;
+      }
+
+      .skeleton-line {
+        height: 14px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.4s infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      /* Modal Backdrop & Dialog */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(15, 23, 42, 0.48);
+        backdrop-filter: blur(4px);
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+      }
+
+      .modal {
+        width: 100%;
+        max-width: 720px;
+        max-height: calc(100vh - 40px);
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-hairline);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-modal);
+        overflow: hidden;
+        animation: modalIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .modal.modal-compact {
+        max-width: 420px;
+      }
+
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-hairline);
+        flex-shrink: 0;
+      }
+
+      .modal-header-text {
+        min-width: 0;
+      }
+
+      .modal-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+
+      .modal-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: var(--text-primary);
+        word-break: break-word;
+      }
+
+      .modal-close {
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--border-hairline);
+        border-radius: 8px;
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        font-size: 16px;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-close:hover {
+        background: var(--bg-surface-subtle);
+        color: var(--text-primary);
+      }
+
+      .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .prompt-full-text {
+        margin: 0;
+        padding: 20px;
+        border-radius: var(--radius-md);
+        background: var(--bg-canvas);
+        border: 1px solid var(--border-hairline);
+        font-size: 15px;
+        line-height: 1.75;
+        color: var(--text-primary);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .confirm-desc {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text-secondary);
+      }
+
+      .confirm-target-title {
+        margin: 12px 0 0;
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        background: var(--bg-canvas);
+        border: 1px solid var(--border-hairline);
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        word-break: break-word;
+      }
+
+      .modal-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-hairline);
+        background: var(--bg-surface);
+        flex-shrink: 0;
+      }
+
+      .modal-footer-left,
+      .modal-footer-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(16px);
+        z-index: 70;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 180ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .toast.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .prompt-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-panel-body {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-form-col {
+          border-right: none;
+          border-bottom: 1px solid var(--border-hairline);
+        }
+      }
+
+      @media (max-width: 720px) {
+        .topbar-inner {
+          flex-wrap: wrap;
+          gap: 12px;
+          padding: 12px 16px;
+        }
+
+        .brand {
+          order: 1;
+        }
+
+        .topbar-actions {
+          order: 2;
+        }
+
+        .search-wrap {
+          order: 3;
+          flex: 1 1 100%;
+          max-width: none;
+        }
+
+        .main {
+          padding: 20px 16px 48px;
+        }
+
+        .prompt-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-panel-header,
+        .admin-form-col,
+        .admin-list-col {
+          padding: 16px;
+        }
+
+        .modal-header,
+        .modal-body,
+        .modal-footer {
+          padding: 16px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a href="#top" class="brand" id="brandLink">
+          <span class="brand-emoji" aria-hidden="true">🗂️</span>
+          <span>프롬프트 보관함</span>
+        </a>
+
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <label for="searchInput" class="sr-only">프롬프트 제목 또는 내용 검색</label>
+          <input
+            id="searchInput"
+            class="search-input"
+            type="search"
+            placeholder="제목이나 내용으로 프롬프트 검색..."
+            autocomplete="off"
+          />
+          <button
+            id="searchClearBtn"
+            class="search-clear"
+            type="button"
+            aria-label="검색어 지우기"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="adminLoginBtn" class="btn btn-secondary" type="button">
+            <span>🔐</span>
+            <span>관리자 로그인</span>
+          </button>
+          <button id="adminMenuToggleBtn" class="btn btn-primary hidden" type="button">
+            <span>🛠️</span>
+            <span>관리자 메뉴</span>
+          </button>
+          <button id="adminLogoutBtn" class="btn btn-secondary hidden" type="button">
+            <span>로그아웃</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="main" id="top">
+      <div id="noticeBanner" class="notice-banner" role="alert">
+        <span id="noticeBannerText"></span>
+        <button id="noticeCloseBtn" class="btn btn-secondary btn-sm" type="button">닫기</button>
+      </div>
+
+      <!-- Admin Menu Section (Visible ONLY to authenticated admin) -->
+      <section id="adminPanel" class="admin-panel hidden" aria-label="관리자 메뉴">
+        <div class="admin-panel-header">
+          <div class="admin-panel-title-wrap">
+            <h2 class="admin-panel-title">🛠️ 관리자 메뉴</h2>
+            <span id="adminEmailLabel" class="admin-email-text"></span>
+          </div>
+          <button id="adminPanelCollapseBtn" class="btn btn-secondary btn-sm" type="button">접기</button>
+        </div>
+
+        <div class="admin-panel-body">
+          <!-- Add / Edit Form -->
+          <div class="admin-form-col">
+            <div class="admin-subhead">
+              <span id="adminFormHeading">새 프롬프트 추가</span>
+              <button id="adminFormResetBtn" class="btn btn-secondary btn-sm hidden" type="button">새로 쓰기로 전환</button>
+            </div>
+
+            <form id="promptForm" novalidate>
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="fieldTitle" class="form-label">제목</label>
+                  <span id="titleCounter" class="form-hint">0 / 120</span>
+                </div>
+                <input
+                  id="fieldTitle"
+                  class="form-input"
+                  type="text"
+                  maxlength="120"
+                  placeholder="프롬프트 제목을 한 줄로 입력하세요"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="fieldCategory" class="form-label">분류</label>
+                </div>
+                <select id="fieldCategory" class="form-select" required>
+                  <option value="실사·합성">📸 실사·합성</option>
+                  <option value="스타일 변환">🎭 스타일 변환</option>
+                  <option value="캐릭터·포스터">🎨 캐릭터·포스터</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label for="fieldContent" class="form-label">내용 (붙여넣은 줄바꿈 그대로 저장)</label>
+                  <span id="contentCounter" class="form-hint">0 / 20,000</span>
+                </div>
+                <textarea
+                  id="fieldContent"
+                  class="form-textarea"
+                  rows="15"
+                  maxlength="20000"
+                  placeholder="프롬프트 전체 내용을 입력하세요. 긴 글과 줄바꿈이 그대로 저장됩니다."
+                  required
+                ></textarea>
+              </div>
+
+              <div id="formError" class="form-error" role="alert"></div>
+
+              <div class="form-actions">
+                <button id="formCancelEditBtn" class="btn btn-secondary hidden" type="button">수정 취소</button>
+                <button id="formSubmitBtn" class="btn btn-primary" type="submit">프롬프트 저장</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Manage Existing Prompts List -->
+          <div class="admin-list-col">
+            <div class="admin-subhead">
+              <span>저장된 프롬프트 관리</span>
+              <span id="adminManageCount" class="form-hint">0개</span>
+            </div>
+            <div id="adminManageList" class="admin-manage-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Guest & Admin Shared Filter Toolbar -->
+      <section class="toolbar" aria-label="분류 필터 및 요약">
+        <div class="filter-tabs" id="filterTabs" role="tablist" aria-label="프롬프트 분류">
+          <button class="filter-tab active" type="button" data-category="전체" role="tab" aria-selected="true">
+            <span>전체</span>
+            <span class="tab-count" data-count-for="전체">0</span>
+          </button>
+          <button class="filter-tab" type="button" data-category="실사·합성" role="tab" aria-selected="false">
+            <span>📸 실사·합성</span>
+            <span class="tab-count" data-count-for="실사·합성">0</span>
+          </button>
+          <button class="filter-tab" type="button" data-category="스타일 변환" role="tab" aria-selected="false">
+            <span>🎭 스타일 변환</span>
+            <span class="tab-count" data-count-for="스타일 변환">0</span>
+          </button>
+          <button class="filter-tab" type="button" data-category="캐릭터·포스터" role="tab" aria-selected="false">
+            <span>🎨 캐릭터·포스터</span>
+            <span class="tab-count" data-count-for="캐릭터·포스터">0</span>
+          </button>
+        </div>
+
+        <div class="toolbar-meta" id="resultSummary">불러오는 중...</div>
+      </section>
+
+      <!-- Prompt Cards Grid -->
+      <section id="promptGrid" class="prompt-grid" aria-live="polite">
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="skeleton-line" style="width: 38%; margin-bottom: 14px"></div>
+          <div class="skeleton-line" style="width: 72%; height: 18px; margin-bottom: 14px"></div>
+          <div class="skeleton-line" style="width: 100%; margin-bottom: 8px"></div>
+          <div class="skeleton-line" style="width: 92%; margin-bottom: 8px"></div>
+          <div class="skeleton-line" style="width: 65%"></div>
+        </div>
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="skeleton-line" style="width: 38%; margin-bottom: 14px"></div>
+          <div class="skeleton-line" style="width: 68%; height: 18px; margin-bottom: 14px"></div>
+          <div class="skeleton-line" style="width: 100%; margin-bottom: 8px"></div>
+          <div class="skeleton-line" style="width: 88%; margin-bottom: 8px"></div>
+          <div class="skeleton-line" style="width: 74%"></div>
+        </div>
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="skeleton-line" style="width: 38%; margin-bottom: 14px"></div>
+          <div class="skeleton-line" style="width: 78%; height: 18px; margin-bottom: 14px"></div>
+          <div class="skeleton-line" style="width: 100%; margin-bottom: 8px"></div>
+          <div class="skeleton-line" style="width: 94%; margin-bottom: 8px"></div>
+          <div class="skeleton-line" style="width: 58%"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Prompt Detail Modal -->
+    <div id="detailModalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-header-text">
+            <div class="modal-meta">
+              <span id="detailModalCategory" class="card-category"></span>
+              <span aria-hidden="true">·</span>
+              <span id="detailModalDate"></span>
+              <span aria-hidden="true">·</span>
+              <span id="detailModalLength" class="card-chars"></span>
+            </div>
+            <h2 id="detailModalTitle" class="modal-title"></h2>
+          </div>
+          <button id="detailCloseBtn" class="modal-close" type="button" aria-label="창 닫기">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <pre id="detailModalContent" class="prompt-full-text"></pre>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-footer-left">
+            <button id="detailEditBtn" class="btn btn-secondary hidden" type="button">✏️ 수정</button>
+            <button id="detailDeleteBtn" class="btn btn-danger hidden" type="button">🗑️ 삭제</button>
+          </div>
+          <div class="modal-footer-right">
+            <button id="detailCopyBtn" class="btn btn-primary" type="button">📋 복사</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal ("정말 삭제할까요?") -->
+    <div id="deleteConfirmBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+      <div class="modal modal-compact">
+        <div class="modal-header">
+          <div class="modal-header-text">
+            <h2 id="deleteConfirmTitle" class="modal-title">정말 삭제할까요?</h2>
+          </div>
+          <button id="deleteConfirmCloseBtn" class="modal-close" type="button" aria-label="창 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="confirm-desc">삭제한 프롬프트는 다시 되돌릴 수 없습니다.</p>
+          <p id="deleteTargetName" class="confirm-target-title"></p>
+        </div>
+        <div class="modal-footer">
+          <div class="modal-footer-left"></div>
+          <div class="modal-footer-right">
+            <button id="deleteCancelBtn" class="btn btn-secondary" type="button">취소</button>
+            <button id="deleteConfirmExecBtn" class="btn btn-danger-solid" type="button">삭제하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="status" aria-live="polite">
+      <span aria-hidden="true">✅</span>
+      <span id="toastText">복사됐어요!</span>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+      import {
+        getAuth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        signOut,
+        onAuthStateChanged
+      } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+      import {
+        getFirestore,
+        collection,
+        doc,
+        getDocFromServer,
+        addDoc,
+        updateDoc,
+        deleteDoc,
+        query,
+        orderBy,
+        onSnapshot,
+        serverTimestamp
+      } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+      // Firebase Configuration (single-file standalone setup for GitHub Pages)
+      const firebaseConfig = {
+        projectId: 'vocal-alignment-sg33w',
+        appId: '1:416377147341:web:cdfe9f3b7f800b15f0be84',
+        apiKey: 'AIzaSyCff_BNwax44VfIrIAVvjy_9XGVrkFJPVc',
+        authDomain: 'vocal-alignment-sg33w.firebaseapp.com',
+        firestoreDatabaseId: 'ai-studio-b988c072-a2dd-4271-a8be-f2921d27054c',
+        storageBucket: 'vocal-alignment-sg33w.firebasestorage.app',
+        messagingSenderId: '416377147341'
+      };
+
+      const ADMIN_EMAIL = 'cjinh1105@gmail.com';
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const googleProvider = new GoogleAuthProvider();
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+      const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+      const promptsCollection = collection(db, 'prompts');
+
+      const OperationType = {
+        CREATE: 'create',
+        UPDATE: 'update',
+        DELETE: 'delete',
+        LIST: 'list',
+        GET: 'get',
+        WRITE: 'write'
+      };
+
+      function handleFirestoreError(error, operationType, path) {
+        const currentUser = auth.currentUser;
+        const errInfo = {
+          error: error instanceof Error ? error.message : String(error),
+          authInfo: {
+            userId: currentUser?.uid ?? null,
+            email: currentUser?.email ?? null,
+            emailVerified: currentUser?.emailVerified ?? null,
+            isAnonymous: currentUser?.isAnonymous ?? null,
+            tenantId: currentUser?.tenantId ?? null,
+            providerInfo:
+              currentUser?.providerData?.map((provider) => ({
+                providerId: provider.providerId,
+                email: provider.email
+              })) || []
+          },
+          operationType,
+          path
+        };
+        console.error('Firestore Error: ', JSON.stringify(errInfo));
+        return errInfo;
+      }
+
+      async function testConnection() {
+        try {
+          await getDocFromServer(doc(db, 'test', 'connection'));
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('the client is offline')) {
+            showNoticeBanner('오프라인 상태이거나 Firebase 연결 설정을 확인할 수 없습니다.');
+          }
+        }
+      }
+
+      const CATEGORY_META = {
+        '실사·합성': { emoji: '📸', label: '실사·합성' },
+        '스타일 변환': { emoji: '🎭', label: '스타일 변환' },
+        '캐릭터·포스터': { emoji: '🎨', label: '캐릭터·포스터' }
+      };
+
+      // App State
+      let allPrompts = [];
+      let selectedCategory = '전체';
+      let searchQuery = '';
+      let isLoading = true;
+      let isAdmin = false;
+      let isAdminPanelOpen = false;
+      let activePromptId = null;
+      let editingPromptId = null;
+      let pendingDeleteId = null;
+      let toastTimer = null;
+      let unsubscribeSnapshot = null;
+
+      // DOM Elements
+      const searchInput = document.getElementById('searchInput');
+      const searchClearBtn = document.getElementById('searchClearBtn');
+      const adminLoginBtn = document.getElementById('adminLoginBtn');
+      const adminMenuToggleBtn = document.getElementById('adminMenuToggleBtn');
+      const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+
+      const noticeBanner = document.getElementById('noticeBanner');
+      const noticeBannerText = document.getElementById('noticeBannerText');
+      const noticeCloseBtn = document.getElementById('noticeCloseBtn');
+
+      const adminPanel = document.getElementById('adminPanel');
+      const adminEmailLabel = document.getElementById('adminEmailLabel');
+      const adminPanelCollapseBtn = document.getElementById('adminPanelCollapseBtn');
+      const adminFormHeading = document.getElementById('adminFormHeading');
+      const adminFormResetBtn = document.getElementById('adminFormResetBtn');
+      const promptForm = document.getElementById('promptForm');
+      const fieldTitle = document.getElementById('fieldTitle');
+      const fieldCategory = document.getElementById('fieldCategory');
+      const fieldContent = document.getElementById('fieldContent');
+      const titleCounter = document.getElementById('titleCounter');
+      const contentCounter = document.getElementById('contentCounter');
+      const formError = document.getElementById('formError');
+      const formCancelEditBtn = document.getElementById('formCancelEditBtn');
+      const formSubmitBtn = document.getElementById('formSubmitBtn');
+      const adminManageCount = document.getElementById('adminManageCount');
+      const adminManageList = document.getElementById('adminManageList');
+
+      const filterTabs = document.getElementById('filterTabs');
+      const resultSummary = document.getElementById('resultSummary');
+      const promptGrid = document.getElementById('promptGrid');
+
+      const detailModalBackdrop = document.getElementById('detailModalBackdrop');
+      const detailCloseBtn = document.getElementById('detailCloseBtn');
+      const detailModalCategory = document.getElementById('detailModalCategory');
+      const detailModalDate = document.getElementById('detailModalDate');
+      const detailModalLength = document.getElementById('detailModalLength');
+      const detailModalTitle = document.getElementById('detailModalTitle');
+      const detailModalContent = document.getElementById('detailModalContent');
+      const detailCopyBtn = document.getElementById('detailCopyBtn');
+      const detailEditBtn = document.getElementById('detailEditBtn');
+      const detailDeleteBtn = document.getElementById('detailDeleteBtn');
+
+      const deleteConfirmBackdrop = document.getElementById('deleteConfirmBackdrop');
+      const deleteConfirmCloseBtn = document.getElementById('deleteConfirmCloseBtn');
+      const deleteTargetName = document.getElementById('deleteTargetName');
+      const deleteCancelBtn = document.getElementById('deleteCancelBtn');
+      const deleteConfirmExecBtn = document.getElementById('deleteConfirmExecBtn');
+
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+
+      // UI Helpers
+      function showNoticeBanner(message) {
+        noticeBannerText.textContent = message;
+        noticeBanner.classList.add('visible');
+      }
+
+      function hideNoticeBanner() {
+        noticeBanner.classList.remove('visible');
+      }
+
+      function showToast(message = '복사됐어요!') {
+        toastText.textContent = message;
+        toast.classList.add('visible');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.remove('visible');
+        }, 2200);
+      }
+
+      async function copyToClipboard(text) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+          }
+        } catch {
+          // Fall through to textarea fallback
+        }
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.top = '-9999px';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        let success = false;
+        try {
+          success = document.execCommand('copy');
+        } catch {
+          success = false;
+        }
+        document.body.removeChild(textarea);
+        return success;
+      }
+
+      function formatDate(timestamp) {
+        if (!timestamp) return '방금 전';
+        const date = typeof timestamp.toDate === 'function' ? timestamp.toDate() : new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return '방금 전';
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        return `${yyyy}.${mm}.${dd} ${hh}:${min}`;
+      }
+
+      function getCategoryBadgeText(category) {
+        const meta = CATEGORY_META[category];
+        return meta ? `${meta.emoji} ${meta.label}` : `📌 ${category}`;
+      }
+
+      function getFilteredPrompts() {
+        const keyword = searchQuery.trim().toLowerCase();
+        return allPrompts.filter((item) => {
+          const matchesCategory = selectedCategory === '전체' || item.category === selectedCategory;
+          if (!matchesCategory) return false;
+          if (!keyword) return true;
+          const titleMatch = (item.title || '').toLowerCase().includes(keyword);
+          const contentMatch = (item.content || '').toLowerCase().includes(keyword);
+          return titleMatch || contentMatch;
+        });
+      }
+
+      function updateCounts() {
+        const counts = {
+          '전체': allPrompts.length,
+          '실사·합성': 0,
+          '스타일 변환': 0,
+          '캐릭터·포스터': 0
+        };
+        for (const p of allPrompts) {
+          if (Object.prototype.hasOwnProperty.call(counts, p.category)) {
+            counts[p.category] += 1;
+          }
+        }
+        document.querySelectorAll('[data-count-for]').forEach((el) => {
+          const key = el.getAttribute('data-count-for');
+          el.textContent = String(counts[key] ?? 0);
+        });
+      }
+
+      // Auth UI Synchronization
+      function syncAuthUI(user) {
+        const email = user?.email ? user.email.toLowerCase() : '';
+        isAdmin = Boolean(user && email === ADMIN_EMAIL);
+
+        adminLoginBtn.classList.toggle('hidden', isAdmin);
+        adminMenuToggleBtn.classList.toggle('hidden', !isAdmin);
+        adminLogoutBtn.classList.toggle('hidden', !isAdmin);
+
+        detailEditBtn.classList.toggle('hidden', !isAdmin);
+        detailDeleteBtn.classList.toggle('hidden', !isAdmin);
+
+        if (isAdmin) {
+          adminEmailLabel.textContent = user.email;
+          adminPanel.classList.toggle('hidden', !isAdminPanelOpen);
+          adminMenuToggleBtn.classList.toggle('active-toggle', isAdminPanelOpen);
+        } else {
+          isAdminPanelOpen = false;
+          adminEmailLabel.textContent = '';
+          adminPanel.classList.add('hidden');
+          resetAdminForm();
+        }
+        renderAdminManageList();
+      }
+
+      // Admin Form Helpers
+      function updateCounters() {
+        titleCounter.textContent = `${fieldTitle.value.length} / 120`;
+        contentCounter.textContent = `${fieldContent.value.length.toLocaleString('ko-KR')} / 20,000`;
+      }
+
+      function showFormError(msg) {
+        formError.textContent = msg;
+        formError.classList.add('visible');
+      }
+
+      function hideFormError() {
+        formError.classList.remove('visible');
+      }
+
+      function resetAdminForm() {
+        editingPromptId = null;
+        adminFormHeading.textContent = '새 프롬프트 추가';
+        formSubmitBtn.textContent = '프롬프트 저장';
+        adminFormResetBtn.classList.add('hidden');
+        formCancelEditBtn.classList.add('hidden');
+        fieldTitle.value = '';
+        fieldCategory.value = selectedCategory !== '전체' ? selectedCategory : '실사·합성';
+        fieldContent.value = '';
+        hideFormError();
+        updateCounters();
+        renderAdminManageList();
+      }
+
+      function startEditingPrompt(promptId) {
+        if (!isAdmin) return;
+        const item = allPrompts.find((p) => p.id === promptId);
+        if (!item) return;
+
+        isAdminPanelOpen = true;
+        adminPanel.classList.remove('hidden');
+        adminMenuToggleBtn.classList.add('active-toggle');
+
+        editingPromptId = item.id;
+        adminFormHeading.textContent = '프롬프트 수정';
+        formSubmitBtn.textContent = '수정 저장';
+        adminFormResetBtn.classList.remove('hidden');
+        formCancelEditBtn.classList.remove('hidden');
+
+        fieldTitle.value = item.title;
+        fieldCategory.value = CATEGORY_META[item.category] ? item.category : '실사·합성';
+        fieldContent.value = item.content;
+        hideFormError();
+        updateCounters();
+        renderAdminManageList();
+
+        adminPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        fieldTitle.focus();
+      }
+
+      function renderAdminManageList() {
+        if (!isAdmin) {
+          adminManageList.innerHTML = '';
+          return;
+        }
+        adminManageCount.textContent = `${allPrompts.length}개`;
+        adminManageList.innerHTML = '';
+
+        if (allPrompts.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'admin-empty-list';
+          empty.textContent = '저장된 프롬프트가 없습니다. 왼쪽에서 새 프롬프트를 추가해 보세요.';
+          adminManageList.appendChild(empty);
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        allPrompts.forEach((item, idx) => {
+          const row = document.createElement('div');
+          row.className = 'admin-manage-row';
+          if (editingPromptId === item.id) {
+            row.classList.add('editing-row');
+          }
+
+          const info = document.createElement('div');
+          info.className = 'admin-row-info';
+
+          const titleEl = document.createElement('p');
+          titleEl.className = 'admin-row-title';
+          titleEl.textContent = `#${String(idx + 1).padStart(2, '0')} ${item.title}`;
+
+          const metaEl = document.createElement('div');
+          metaEl.className = 'admin-row-meta';
+          metaEl.textContent = `${getCategoryBadgeText(item.category)} · ${item.content.length.toLocaleString('ko-KR')}자`;
+
+          info.appendChild(titleEl);
+          info.appendChild(metaEl);
+
+          const actions = document.createElement('div');
+          actions.className = 'admin-row-actions';
+
+          const editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.className = 'btn btn-secondary btn-sm';
+          editBtn.textContent = '수정';
+          editBtn.addEventListener('click', () => startEditingPrompt(item.id));
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.type = 'button';
+          deleteBtn.className = 'btn btn-danger btn-sm';
+          deleteBtn.textContent = '삭제';
+          deleteBtn.addEventListener('click', () => openDeleteConfirmModal(item.id));
+
+          actions.appendChild(editBtn);
+          actions.appendChild(deleteBtn);
+
+          row.appendChild(info);
+          row.appendChild(actions);
+          fragment.appendChild(row);
+        });
+
+        adminManageList.appendChild(fragment);
+      }
+
+      // Render Public Cards Grid
+      function renderPrompts() {
+        updateCounts();
+        renderAdminManageList();
+
+        if (isLoading) {
+          resultSummary.textContent = '불러오는 중...';
+          return;
+        }
+
+        const filtered = getFilteredPrompts();
+        resultSummary.textContent =
+          filtered.length === allPrompts.length
+            ? `총 ${allPrompts.length}개 프롬프트`
+            : `검색 결과 ${filtered.length}개 / 전체 ${allPrompts.length}개`;
+
+        promptGrid.innerHTML = '';
+
+        if (allPrompts.length === 0) {
+          const emptyBox = document.createElement('div');
+          emptyBox.className = 'state-box';
+          emptyBox.innerHTML = `
+            <div class="state-emoji" aria-hidden="true">📝</div>
+            <h3 class="state-title">저장된 프롬프트가 아직 없습니다</h3>
+            <p class="state-desc">${
+              isAdmin
+                ? '관리자 메뉴에서 첫 프롬프트를 등록해 보세요.'
+                : '관리자가 프롬프트를 등록하면 이곳에 표시됩니다.'
+            }</p>
+          `;
+          promptGrid.appendChild(emptyBox);
+          return;
+        }
+
+        if (filtered.length === 0) {
+          const noMatchBox = document.createElement('div');
+          noMatchBox.className = 'state-box';
+          noMatchBox.innerHTML = `
+            <div class="state-emoji" aria-hidden="true">🔎</div>
+            <h3 class="state-title">일치하는 프롬프트가 없습니다</h3>
+            <p class="state-desc">검색어를 지우거나 다른 분류를 선택해 보세요.</p>
+          `;
+          const resetBtn = document.createElement('button');
+          resetBtn.type = 'button';
+          resetBtn.className = 'btn btn-secondary';
+          resetBtn.textContent = '필터 초기화';
+          resetBtn.addEventListener('click', () => {
+            selectedCategory = '전체';
+            searchQuery = '';
+            searchInput.value = '';
+            searchClearBtn.classList.remove('visible');
+            syncActiveTab();
+            renderPrompts();
+          });
+          noMatchBox.appendChild(resetBtn);
+          promptGrid.appendChild(noMatchBox);
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        filtered.forEach((item) => {
+          const indexInAll = allPrompts.findIndex((p) => p.id === item.id);
+          const card = document.createElement('article');
+          card.className = 'prompt-card';
+          card.tabIndex = 0;
+          card.setAttribute('role', 'button');
+          card.setAttribute('aria-label', `${item.title} 프롬프트 크게 보기`);
+
+          const topWrap = document.createElement('div');
+
+          const meta = document.createElement('div');
+          meta.className = 'card-meta';
+
+          const catSpan = document.createElement('span');
+          catSpan.className = 'card-category';
+          catSpan.textContent = getCategoryBadgeText(item.category);
+
+          const orderSpan = document.createElement('span');
+          orderSpan.className = 'card-order';
+          orderSpan.textContent = `#${String(indexInAll + 1).padStart(2, '0')}`;
+
+          meta.appendChild(catSpan);
+          meta.appendChild(orderSpan);
+
+          const titleEl = document.createElement('h2');
+          titleEl.className = 'card-title';
+          titleEl.textContent = item.title;
+
+          const previewEl = document.createElement('p');
+          previewEl.className = 'card-preview';
+          previewEl.textContent = item.content;
+
+          topWrap.appendChild(meta);
+          topWrap.appendChild(titleEl);
+          topWrap.appendChild(previewEl);
+
+          const footer = document.createElement('div');
+          footer.className = 'card-footer';
+
+          const charsSpan = document.createElement('span');
+          charsSpan.className = 'card-chars';
+          charsSpan.textContent = `${item.content.length.toLocaleString('ko-KR')}자`;
+
+          const copyBtn = document.createElement('button');
+          copyBtn.type = 'button';
+          copyBtn.className = 'btn btn-copy';
+          copyBtn.textContent = '📋 복사';
+          copyBtn.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            const ok = await copyToClipboard(item.content);
+            if (ok) {
+              copyBtn.classList.add('copied');
+              copyBtn.textContent = '✓ 복사됨';
+              showToast('복사됐어요!');
+              setTimeout(() => {
+                copyBtn.classList.remove('copied');
+                copyBtn.textContent = '📋 복사';
+              }, 1600);
+            }
+          });
+
+          footer.appendChild(charsSpan);
+          footer.appendChild(copyBtn);
+
+          card.appendChild(topWrap);
+          card.appendChild(footer);
+
+          card.addEventListener('click', () => openDetailModal(item.id));
+          card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              openDetailModal(item.id);
+            }
+          });
+
+          fragment.appendChild(card);
+        });
+
+        promptGrid.appendChild(fragment);
+      }
+
+      function syncActiveTab() {
+        filterTabs.querySelectorAll('.filter-tab').forEach((btn) => {
+          const isMatch = btn.getAttribute('data-category') === selectedCategory;
+          btn.classList.toggle('active', isMatch);
+          btn.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+        });
+      }
+
+      // Detail Modal
+      function openDetailModal(promptId) {
+        const item = allPrompts.find((p) => p.id === promptId);
+        if (!item) return;
+
+        activePromptId = promptId;
+
+        detailModalCategory.textContent = getCategoryBadgeText(item.category);
+        detailModalDate.textContent = formatDate(item.createdAt);
+        detailModalLength.textContent = `${item.content.length.toLocaleString('ko-KR')}자`;
+        detailModalTitle.textContent = item.title;
+        detailModalContent.textContent = item.content;
+        detailCopyBtn.textContent = '📋 복사';
+
+        detailEditBtn.classList.toggle('hidden', !isAdmin);
+        detailDeleteBtn.classList.toggle('hidden', !isAdmin);
+
+        detailModalBackdrop.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        detailCopyBtn.focus();
+      }
+
+      function closeDetailModal() {
+        detailModalBackdrop.classList.remove('open');
+        activePromptId = null;
+        if (!deleteConfirmBackdrop.classList.contains('open')) {
+          document.body.style.overflow = '';
+        }
+      }
+
+      // Delete Confirmation Modal ("정말 삭제할까요?")
+      function openDeleteConfirmModal(promptId) {
+        if (!isAdmin) return;
+        const item = allPrompts.find((p) => p.id === promptId);
+        if (!item) return;
+
+        pendingDeleteId = promptId;
+        deleteTargetName.textContent = item.title;
+        deleteConfirmBackdrop.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        deleteCancelBtn.focus();
+      }
+
+      function closeDeleteConfirmModal() {
+        deleteConfirmBackdrop.classList.remove('open');
+        pendingDeleteId = null;
+        if (!detailModalBackdrop.classList.contains('open')) {
+          document.body.style.overflow = '';
+        }
+      }
+
+      // Subscribe to Firestore prompts ordered oldest first (먼저 만든 것이 위)
+      function startPromptsListener() {
+        if (unsubscribeSnapshot) {
+          unsubscribeSnapshot();
+          unsubscribeSnapshot = null;
+        }
+        isLoading = true;
+        renderPrompts();
+
+        const q = query(promptsCollection, orderBy('createdAt', 'asc'));
+        unsubscribeSnapshot = onSnapshot(
+          q,
+          (snapshot) => {
+            allPrompts = snapshot.docs.map((docSnap) => {
+              const data = docSnap.data();
+              return {
+                id: docSnap.id,
+                title: data.title || '',
+                category: data.category || '실사·합성',
+                content: data.content || '',
+                createdAt: data.createdAt || null
+              };
+            });
+            isLoading = false;
+            renderPrompts();
+
+            if (activePromptId) {
+              const updated = allPrompts.find((p) => p.id === activePromptId);
+              if (updated) {
+                detailModalCategory.textContent = getCategoryBadgeText(updated.category);
+                detailModalDate.textContent = formatDate(updated.createdAt);
+                detailModalLength.textContent = `${updated.content.length.toLocaleString('ko-KR')}자`;
+                detailModalTitle.textContent = updated.title;
+                detailModalContent.textContent = updated.content;
+              } else {
+                closeDetailModal();
+              }
+            }
+          },
+          (error) => {
+            handleFirestoreError(error, OperationType.LIST, 'prompts');
+            isLoading = false;
+            showNoticeBanner('프롬프트 목록을 불러오지 못했습니다. 잠시 후 새로고침해 주세요.');
+            renderPrompts();
+          }
+        );
+      }
+
+      // Google Admin Authentication
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const email = user.email ? user.email.toLowerCase() : '';
+          if (email !== ADMIN_EMAIL) {
+            await signOut(auth);
+            syncAuthUI(null);
+            showNoticeBanner('관리자만 사용할 수 있어요.');
+            showToast('관리자만 사용할 수 있어요');
+            return;
+          }
+          hideNoticeBanner();
+          isAdminPanelOpen = true;
+          syncAuthUI(user);
+        } else {
+          syncAuthUI(null);
+        }
+      });
+
+      adminLoginBtn.addEventListener('click', async () => {
+        hideNoticeBanner();
+        adminLoginBtn.disabled = true;
+        try {
+          const result = await signInWithPopup(auth, googleProvider);
+          const email = result.user?.email ? result.user.email.toLowerCase() : '';
+          if (email !== ADMIN_EMAIL) {
+            await signOut(auth);
+            syncAuthUI(null);
+            showNoticeBanner('관리자만 사용할 수 있어요.');
+            showToast('관리자만 사용할 수 있어요');
+          } else {
+            isAdminPanelOpen = true;
+            syncAuthUI(result.user);
+            showToast('관리자로 로그인했어요.');
+          }
+        } catch (error) {
+          const code = error?.code || '';
+          if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+            return;
+          }
+          if (code === 'auth/popup-blocked') {
+            showNoticeBanner('브라우저에서 로그인 팝업이 차단되었습니다. 팝업 차단을 해제해 주세요.');
+          } else {
+            showNoticeBanner('Google 로그인 중 오류가 발생했습니다. 다시 시도해 주세요.');
+          }
+        } finally {
+          adminLoginBtn.disabled = false;
+        }
+      });
+
+      adminLogoutBtn.addEventListener('click', async () => {
+        try {
+          await signOut(auth);
+          syncAuthUI(null);
+          showToast('로그아웃했어요.');
+        } catch (error) {
+          showNoticeBanner('로그아웃 중 오류가 발생했습니다.');
+        }
+      });
+
+      adminMenuToggleBtn.addEventListener('click', () => {
+        if (!isAdmin) return;
+        isAdminPanelOpen = !isAdminPanelOpen;
+        adminPanel.classList.toggle('hidden', !isAdminPanelOpen);
+        adminMenuToggleBtn.classList.toggle('active-toggle', isAdminPanelOpen);
+      });
+
+      adminPanelCollapseBtn.addEventListener('click', () => {
+        isAdminPanelOpen = false;
+        adminPanel.classList.add('hidden');
+        adminMenuToggleBtn.classList.remove('active-toggle');
+      });
+
+      // Search & Filter Events
+      searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value;
+        searchClearBtn.classList.toggle('visible', searchQuery.length > 0);
+        renderPrompts();
+      });
+
+      searchClearBtn.addEventListener('click', () => {
+        searchQuery = '';
+        searchInput.value = '';
+        searchClearBtn.classList.remove('visible');
+        searchInput.focus();
+        renderPrompts();
+      });
+
+      filterTabs.addEventListener('click', (event) => {
+        const tab = event.target.closest('.filter-tab');
+        if (!tab) return;
+        selectedCategory = tab.getAttribute('data-category') || '전체';
+        syncActiveTab();
+        renderPrompts();
+      });
+
+      noticeCloseBtn.addEventListener('click', hideNoticeBanner);
+
+      // Detail Modal Events
+      detailCloseBtn.addEventListener('click', closeDetailModal);
+      detailModalBackdrop.addEventListener('click', (event) => {
+        if (event.target === detailModalBackdrop) closeDetailModal();
+      });
+
+      detailCopyBtn.addEventListener('click', async () => {
+        const item = allPrompts.find((p) => p.id === activePromptId);
+        if (!item) return;
+        const ok = await copyToClipboard(item.content);
+        if (ok) {
+          detailCopyBtn.textContent = '✓ 복사됨';
+          showToast('복사됐어요!');
+          setTimeout(() => {
+            detailCopyBtn.textContent = '📋 복사';
+          }, 1600);
+        }
+      });
+
+      detailEditBtn.addEventListener('click', () => {
+        if (!isAdmin || !activePromptId) return;
+        const targetId = activePromptId;
+        closeDetailModal();
+        startEditingPrompt(targetId);
+      });
+
+      detailDeleteBtn.addEventListener('click', () => {
+        if (!isAdmin || !activePromptId) return;
+        openDeleteConfirmModal(activePromptId);
+      });
+
+      // Delete Confirmation Modal Events
+      deleteConfirmCloseBtn.addEventListener('click', closeDeleteConfirmModal);
+      deleteCancelBtn.addEventListener('click', closeDeleteConfirmModal);
+      deleteConfirmBackdrop.addEventListener('click', (event) => {
+        if (event.target === deleteConfirmBackdrop) closeDeleteConfirmModal();
+      });
+
+      deleteConfirmExecBtn.addEventListener('click', async () => {
+        if (!isAdmin || !pendingDeleteId) return;
+        const targetId = pendingDeleteId;
+        deleteConfirmExecBtn.disabled = true;
+        try {
+          await deleteDoc(doc(db, 'prompts', targetId));
+          if (editingPromptId === targetId) {
+            resetAdminForm();
+          }
+          if (activePromptId === targetId) {
+            closeDetailModal();
+          }
+          closeDeleteConfirmModal();
+          showToast('프롬프트를 삭제했어요.');
+        } catch (err) {
+          handleFirestoreError(err, OperationType.DELETE, `prompts/${targetId}`);
+          closeDeleteConfirmModal();
+          showNoticeBanner('프롬프트 삭제에 실패했습니다. 관리자 권한을 확인해 주세요.');
+        } finally {
+          deleteConfirmExecBtn.disabled = false;
+        }
+      });
+
+      // Admin Form Events
+      fieldTitle.addEventListener('input', updateCounters);
+      fieldContent.addEventListener('input', updateCounters);
+      adminFormResetBtn.addEventListener('click', resetAdminForm);
+      formCancelEditBtn.addEventListener('click', resetAdminForm);
+
+      promptForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!isAdmin) return;
+        hideFormError();
+
+        const title = fieldTitle.value.trim();
+        const category = fieldCategory.value;
+        const content = fieldContent.value.replace(/\r\n/g, '\n');
+
+        if (!title || title.length > 120) {
+          showFormError('제목은 1자 이상 120자 이하로 입력해 주세요.');
+          fieldTitle.focus();
+          return;
+        }
+        if (!CATEGORY_META[category]) {
+          showFormError('올바른 분류를 선택해 주세요.');
+          fieldCategory.focus();
+          return;
+        }
+        if (!content.trim() || content.length > 20000) {
+          showFormError('내용은 1자 이상 20,000자 이하로 입력해 주세요.');
+          fieldContent.focus();
+          return;
+        }
+
+        formSubmitBtn.disabled = true;
+        const isEditing = Boolean(editingPromptId);
+        formSubmitBtn.textContent = '저장 중...';
+
+        try {
+          if (isEditing) {
+            const targetPath = `prompts/${editingPromptId}`;
+            try {
+              await updateDoc(doc(db, 'prompts', editingPromptId), {
+                title,
+                category,
+                content
+              });
+            } catch (err) {
+              handleFirestoreError(err, OperationType.UPDATE, targetPath);
+              throw err;
+            }
+            resetAdminForm();
+            showToast('프롬프트를 수정했어요.');
+          } else {
+            try {
+              await addDoc(promptsCollection, {
+                title,
+                category,
+                content,
+                createdAt: serverTimestamp()
+              });
+            } catch (err) {
+              handleFirestoreError(err, OperationType.CREATE, 'prompts');
+              throw err;
+            }
+            resetAdminForm();
+            showToast('새 프롬프트를 저장했어요.');
+          }
+        } catch (err) {
+          showFormError('저장 중 오류가 발생했습니다. 관리자 로그인 상태와 입력 내용을 확인해 주세요.');
+        } finally {
+          formSubmitBtn.disabled = false;
+          if (!editingPromptId) {
+            formSubmitBtn.textContent = '프롬프트 저장';
+          } else {
+            formSubmitBtn.textContent = '수정 저장';
+          }
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          if (deleteConfirmBackdrop.classList.contains('open')) {
+            closeDeleteConfirmModal();
+          } else if (detailModalBackdrop.classList.contains('open')) {
+            closeDetailModal();
+          }
+        }
+      });
+
+      // Boot
+      updateCounters();
+      testConnection();
+      startPromptsListener();
+    </script>
+  </body>
+</html>
